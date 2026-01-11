@@ -83,8 +83,7 @@ func startExternalServer(t *testing.T, cmdStr string) (*systemUnderTest, error) 
 	}
 
 	launcher := func() (*exec.Cmd, string, error) {
-		ctx, cancel := context.WithCancel(context.Background())
-		cmd := exec.CommandContext(ctx, "/bin/sh", "-c", cmdStr)
+		cmd := exec.CommandContext(context.Background(), "/bin/sh", "-c", cmdStr)
 		cmd.Env = append(os.Environ(),
 			fmt.Sprintf("KV_HTTP_ADDR=%s", addr),
 			fmt.Sprintf("KV_DATA_DIR=%s", dataDir),
@@ -92,13 +91,11 @@ func startExternalServer(t *testing.T, cmdStr string) (*systemUnderTest, error) 
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Start(); err != nil {
-			cancel()
 			return nil, "", fmt.Errorf("cmd start: %w", err)
 		}
 		baseURL := "http://" + addr
 		if err := waitForReady(baseURL, 10*time.Second); err != nil {
 			_ = cmd.Process.Kill()
-			cancel()
 			return nil, "", fmt.Errorf("wait for ready: %w", err)
 		}
 		return cmd, baseURL, nil

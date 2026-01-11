@@ -154,10 +154,6 @@ func decodeWireKeyValue(w apiclient.KeyValue) (KeyValue, error) {
 	return KeyValue{Key: keyBytes, Value: valBytes}, nil
 }
 
-func wrapAPIError(err error) error {
-	return err
-}
-
 func newAPIError(status int, body []byte) error {
 	if status == http.StatusNotFound {
 		return ErrNotFound

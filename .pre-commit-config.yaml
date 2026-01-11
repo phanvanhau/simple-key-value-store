@@ -1,0 +1,40 @@
+repos:
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: gofmt
+        entry: gofmt
+        language: system
+        types: [go]
+        args: ["-w"]
+      - id: goimports
+        name: goimports
+        entry: goimports
+        language: system
+        types: [go]
+        args: ["-w"]
+      - id: misspell
+        name: misspell
+        entry: misspell
+        language: system
+        files: "\\.(go|md)$"
+        args: ["-w"]
+      - id: golangci-lint-or-vet
+        name: golangci-lint (fallback to go vet)
+        entry: bash
+        language: system
+        pass_filenames: false
+        args:
+          - -c
+          - |
+            if command -v golangci-lint >/dev/null 2>&1; then
+              golangci-lint run ./...
+            else
+              go vet ./...
+            fi
+      - id: gitleaks
+        name: gitleaks protect
+        entry: gitleaks
+        language: system
+        pass_filenames: false
+        args: ["protect", "--staged"]
