@@ -11,6 +11,7 @@
 *.trace
 coverage*.txt
 
+.gocache/
 # Local build/test caches (when redirected)
 .cache/
 
