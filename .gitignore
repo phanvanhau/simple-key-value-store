@@ -1,0 +1,26 @@
+# Build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.prof
+*.pprof
+*.trace
+coverage*.txt
+
+# Local build/test caches (when redirected)
+.cache/
+
+# Local development state
+bin/
+tmp/
+*.log
+.DS_Store
+.idea/
+.vscode/
+
+# Generated modules/vendors (keep if you vendor)
+vendor/

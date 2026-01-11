@@ -1,0 +1,142 @@
+openapi: 3.0.3
+info:
+  title: Simple LSM Key-Value Store API
+  version: 0.1.0
+  description: >
+    REST API for a Cassandra/RocksDB-style key-value store.
+    Keys and values are opaque bytes; clients must base64-encode keys/values
+    for transport. Writes are idempotent and follow last-write-wins semantics.
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+paths:
+  /v1/kv/{key}:
+    parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Key'
+        description: Base64-encoded key bytes. Use URL-safe base64 if needed for path safety.
+    put:
+      summary: Create or update a value
+      operationId: putKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value]
+              properties:
+                value:
+                  $ref: '#/components/schemas/Value'
+            examples:
+              put:
+                value: djE=
+      responses:
+        '200':
+          description: Value written successfully (idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyValue'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      summary: Read a single key
+      operationId: getKey
+      responses:
+        '200':
+          description: Value found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyValue'
+        '404':
+          description: Key not found
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      summary: Delete a key (tombstone)
+      operationId: deleteKey
+      responses:
+        '204':
+          description: Deleted (idempotent; tombstone persisted)
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v1/kv:
+    get:
+      summary: Range scan
+      description: Returns key/value pairs where key is in [fromKey, endKey).
+      operationId: scanRange
+      parameters:
+        - name: fromKey
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Key'
+          description: Inclusive lower bound (base64-encoded key bytes).
+        - name: endKey
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Key'
+          description: Exclusive upper bound (base64-encoded key bytes).
+      responses:
+        '200':
+          description: Ordered list of key/value pairs in range
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KeyValue'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  schemas:
+    Key:
+      type: string
+      description: Base64-encoded key bytes; clients choose URL-safe encoding when embedded in paths.
+    Value:
+      type: string
+      description: Base64-encoded value bytes.
+    KeyValue:
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          $ref: '#/components/schemas/Key'
+        value:
+          $ref: '#/components/schemas/Value'
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+          description: Optional machine-readable error code.
+  responses:
+    BadRequest:
+      description: Invalid input (e.g., malformed base64 or missing fields)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
