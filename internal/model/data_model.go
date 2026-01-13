@@ -8,7 +8,8 @@ const (
 )
 
 type Mutation struct {
-	Op    OpsType
-	Key   []byte
-	Value []byte
+	Op       OpsType
+	Key      []byte
+	Value    []byte
+	Sequence uint64 // Monotonic sequence number for ordering (last-write-wins)
 }
